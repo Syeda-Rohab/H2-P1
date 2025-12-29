@@ -1,0 +1,134 @@
+========================================
+  EXACT STEPS TO USE PUT API
+========================================
+
+The PUT API is WORKING! ✓
+You just need to authenticate first.
+
+========================================
+METHOD 1: Use the Batch File (EASIEST)
+========================================
+
+Double-click this file:
+  C:\Users\Dell\Desktop\H2 todo-app\TEST_PUT_API.bat
+
+It will automatically:
+1. Register a user
+2. Get the token
+3. Create a task
+4. UPDATE it with PUT
+5. Show you the result
+
+You'll see "UPDATED TITLE" if it works!
+
+========================================
+METHOD 2: Manual Steps in Browser
+========================================
+
+1. Open: http://127.0.0.1:8000/docs
+
+2. REGISTER USER
+   ─────────────
+   - Click: POST /api/auth/register
+   - Click: Try it out
+   - Body:
+     {
+       "email": "mytest@test.com",
+       "password": "password123"
+     }
+   - Click: Execute
+   - COPY the "access_token" (long string)
+
+3. AUTHORIZE (CRITICAL!)
+   ─────────────
+   - Look at TOP RIGHT
+   - Click: Authorize button 🔒
+   - Paste: Bearer YOUR_TOKEN
+     Example: Bearer eyJhbGc...
+   - Click: Authorize
+   - Click: Close
+
+4. CREATE A TASK
+   ─────────────
+   - Click: POST /api/tasks/
+   - Click: Try it out
+   - Body:
+     {
+       "title": "My Task",
+       "description": "Original"
+     }
+   - Click: Execute
+   - Note the "id" in response (e.g., 1)
+
+5. USE PUT TO UPDATE
+   ─────────────
+   - Click: PUT /api/tasks/{task_id}
+   - Click: Try it out
+   - task_id: 1 (or the id from step 4)
+   - Body:
+     {
+       "title": "UPDATED TITLE"
+     }
+   - Click: Execute
+   - ✓ IT WORKS!
+
+========================================
+METHOD 3: Using curl
+========================================
+
+# Register
+curl -X POST http://127.0.0.1:8000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"test@test.com\",\"password\":\"password123\"}"
+
+# Copy the access_token from response
+
+# Create task
+curl -X POST http://127.0.0.1:8000/api/tasks/ \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"title\":\"Original\"}"
+
+# Note the task id
+
+# UPDATE with PUT (THIS IS WHAT YOU WANT!)
+curl -X PUT http://127.0.0.1:8000/api/tasks/1 \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"title\":\"UPDATED\"}"
+
+========================================
+COMMON ERRORS & SOLUTIONS
+========================================
+
+❌ Error: 401 Unauthorized
+   Cause: No token or wrong token
+   Fix: Did you click "Authorize" button?
+
+❌ Error: 404 Not Found
+   Cause: Task doesn't exist
+   Fix: Create a task first (step 4)
+
+❌ Error: 422 Validation Error
+   Cause: Invalid JSON
+   Fix: Check your JSON format
+
+========================================
+PROOF IT WORKS
+========================================
+
+Run: TEST_PUT_API.bat
+
+You will see output like:
+  "id": 1,
+  "title": "UPDATED TITLE",    <-- This proves PUT worked!
+  "description": "UPDATED DESCRIPTION"
+
+========================================
+
+The PUT API is 100% functional!
+The ONLY requirement is authentication.
+
+Choose Method 1 (run the .bat file) for instant proof!
+
+========================================
