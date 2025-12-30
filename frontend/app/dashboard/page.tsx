@@ -20,6 +20,9 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -91,6 +94,37 @@ export default function DashboardPage() {
       fetchTasks();
     } catch (err: any) {
       setError('Failed to delete task');
+    }
+  };
+
+  const handleStartEdit = (task: Task) => {
+    setEditingTaskId(task.id);
+    setEditTitle(task.title);
+    setEditDescription(task.description || '');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTaskId(null);
+    setEditTitle('');
+    setEditDescription('');
+  };
+
+  const handleSaveEdit = async (taskId: number) => {
+    if (!editTitle.trim()) {
+      setError('Title cannot be empty');
+      return;
+    }
+    try {
+      await apiClient.put(`/api/tasks/${taskId}`, {
+        title: editTitle,
+        description: editDescription || null
+      });
+      setEditingTaskId(null);
+      setEditTitle('');
+      setEditDescription('');
+      fetchTasks();
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to update task');
     }
   };
 
@@ -176,42 +210,86 @@ export default function DashboardPage() {
                   key={task.id}
                   className="bg-gray-900 p-5 rounded-xl border border-gray-700 hover:border-indigo-500/50 transition-all"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className={`text-lg font-semibold ${task.status === 'Complete' ? 'line-through text-gray-500' : 'text-white'}`}>
-                        {task.title}
-                      </h4>
-                      {task.description && (
-                        <p className="text-gray-400 mt-1">{task.description}</p>
-                      )}
-                      <p className="text-xs text-gray-600 mt-2">
-                        {new Date(task.created_at).toLocaleString()}
-                      </p>
+                  {editingTaskId === task.id ? (
+                    // Edit Mode
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                        placeholder="Task title..."
+                        autoFocus
+                      />
+                      <textarea
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                        placeholder="Description (optional)..."
+                        rows={3}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleSaveEdit(task.id)}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm transition-all"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm transition-all"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        task.status === 'Complete'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-yellow-500/20 text-yellow-400'
-                      }`}
-                    >
-                      {task.status}
-                    </span>
-                  </div>
-                  <div className="mt-4 flex gap-2">
-                    <button
-                      onClick={() => handleToggleStatus(task.id)}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm transition-all"
-                    >
-                      {task.status === 'Complete' ? 'Undo' : 'Complete'}
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTask(task.id)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm transition-all"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  ) : (
+                    // View Mode
+                    <>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className={`text-lg font-semibold ${task.status === 'Complete' ? 'line-through text-gray-500' : 'text-white'}`}>
+                            {task.title}
+                          </h4>
+                          {task.description && (
+                            <p className="text-gray-400 mt-1">{task.description}</p>
+                          )}
+                          <p className="text-xs text-gray-600 mt-2">
+                            {new Date(task.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            task.status === 'Complete'
+                              ? 'bg-green-500/20 text-green-400'
+                              : 'bg-yellow-500/20 text-yellow-400'
+                          }`}
+                        >
+                          {task.status}
+                        </span>
+                      </div>
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          onClick={() => handleToggleStatus(task.id)}
+                          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm transition-all"
+                        >
+                          {task.status === 'Complete' ? 'Undo' : 'Complete'}
+                        </button>
+                        <button
+                          onClick={() => handleStartEdit(task)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm transition-all"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTask(task.id)}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm transition-all"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
